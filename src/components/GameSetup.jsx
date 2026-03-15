@@ -304,7 +304,7 @@ function PastGameModal({ game, onClose, isDark }) {
                           <span className={`font-bold ${won > 0 ? isDark ? 'text-casino-gold' : 'text-amber-600' : isDark ? 'text-gray-600' : 'text-gray-400'}`}>₹{won}</span>
                         </div>
                         <div className={`flex justify-between text-xs pt-1 border-t ${isDark ? 'border-casino-green-light/20' : 'border-amber-100'}`}>
-                          <span className={isDark ? 'text-emerald-500' : 'text-gray-500'}>Net</span>
+                          <span className={isDark ? 'text-emerald-500' : 'text-gray-500'}>Profit</span>
                           <span className={`font-black ${net > 0 ? 'text-emerald-400' : net < 0 ? 'text-red-400' : isDark ? 'text-gray-500' : 'text-gray-400'}`}>
                             {net > 0 ? `+₹${net}` : net < 0 ? `-₹${Math.abs(net)}` : '₹0'}
                           </span>
