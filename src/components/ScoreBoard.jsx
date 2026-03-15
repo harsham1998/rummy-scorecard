@@ -140,6 +140,7 @@ export default function ScoreBoard({
   onAddRound,
   onUndoRound,
   onResetGame,
+  onPauseGame,
   onEditName,
   onToggleTheme,
   onRejoinPlayer,
@@ -230,6 +231,12 @@ export default function ScoreBoard({
 
             {/* Controls */}
             <div className="flex items-center gap-1.5 flex-shrink-0">
+              <button onClick={onPauseGame} title="Save & go home"
+                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm transition-all active:scale-90
+                  ${isDark ? 'bg-casino-green-light/60 text-white hover:bg-casino-green-light' : 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'}`}>
+                🏠
+              </button>
+
               <button onClick={onToggleTheme}
                 className={`w-8 h-8 rounded-full flex items-center justify-center transition-all active:scale-90 text-sm
                   ${isDark ? 'bg-casino-green-light/60 text-casino-gold hover:bg-casino-green-light' : 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'}`}>

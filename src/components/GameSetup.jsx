@@ -173,7 +173,7 @@ function PastGameModal({ game, onClose, isDark }) {
   );
 }
 
-export default function GameSetup({ onStart, theme, pastGames = [], clearHistory }) {
+export default function GameSetup({ onStart, theme, pastGames = [], clearHistory, resumeGame, pausedPlayers = [], pausedRounds = 0 }) {
   const [selectedNames, setSelectedNames] = useState([]); // ordered list of selected players
   const [savedPlayers, setSavedPlayers] = useState([]);
   const [showAddPlayer, setShowAddPlayer] = useState(false);
@@ -286,6 +286,29 @@ export default function GameSetup({ onStart, theme, pastGames = [], clearHistory
             13 Card Game Scorekeeper
           </p>
         </div>
+
+        {/* ── In-Progress Game Resume Card ── */}
+        {pausedPlayers.length >= 2 && pausedRounds > 0 && (
+          <div className={`mb-4 rounded-2xl p-4 border-2 animate-slideDown flex items-center gap-4
+            ${isDark ? 'bg-casino-gold/10 border-casino-gold/40' : 'bg-amber-50 border-amber-300'}`}>
+            <div className="text-3xl flex-shrink-0">⏸️</div>
+            <div className="flex-1 min-w-0">
+              <div className={`text-sm font-black ${isDark ? 'text-casino-gold' : 'text-amber-700'}`}>
+                Game In Progress
+              </div>
+              <div className={`text-xs mt-0.5 truncate ${isDark ? 'text-emerald-400' : 'text-amber-600'}`}>
+                Round {pausedRounds} · {pausedPlayers.map(p => p.name).join(', ')}
+              </div>
+            </div>
+            <button
+              onClick={resumeGame}
+              className={`flex-shrink-0 px-4 py-2 rounded-xl font-black text-sm transition-all active:scale-95 shadow-md
+                ${isDark ? 'bg-casino-gold text-casino-felt hover:bg-casino-gold-light' : 'bg-amber-500 text-white hover:bg-amber-400'}`}
+            >
+              ▶ Resume
+            </button>
+          </div>
+        )}
 
         {/* Setup card */}
         <div className={`rounded-2xl p-6 shadow-2xl ${isDark ? 'glass' : 'glass-light bg-white/80'}`}>

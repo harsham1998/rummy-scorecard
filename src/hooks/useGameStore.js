@@ -333,6 +333,14 @@ export const useGameStore = () => {
     }));
   }, [updateState]);
 
+  const pauseGame = useCallback(() => {
+    updateState(prev => ({ ...prev, gameStarted: false }));
+  }, [updateState]);
+
+  const resumeGame = useCallback(() => {
+    updateState(prev => ({ ...prev, gameStarted: true }));
+  }, [updateState]);
+
   const clearHistory = useCallback(async () => {
     const { error } = await supabase
       .from('game_sessions')
@@ -401,5 +409,7 @@ export const useGameStore = () => {
     updateBuyIn,
     pastGames,
     clearHistory,
+    pauseGame,
+    resumeGame,
   };
 };

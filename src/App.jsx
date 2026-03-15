@@ -31,6 +31,8 @@ export default function App() {
     pastGames,
     clearHistory,
     loading,
+    pauseGame,
+    resumeGame,
   } = useGameStore();
 
   // Apply theme to document
@@ -60,7 +62,7 @@ export default function App() {
   };
 
   if (!gameStarted) {
-    return <GameSetup onStart={startGame} theme={theme} pastGames={pastGames} clearHistory={clearHistory} />;
+    return <GameSetup onStart={startGame} theme={theme} pastGames={pastGames} clearHistory={clearHistory} resumeGame={resumeGame} pausedPlayers={players} pausedRounds={rounds} />;
   }
 
   if (gameOver && winner) {
@@ -88,6 +90,7 @@ export default function App() {
       onAddRound={addRound}
       onUndoRound={undoLastRound}
       onResetGame={resetGame}
+      onPauseGame={pauseGame}
       onEditName={editPlayerName}
       onToggleTheme={toggleTheme}
       onRejoinPlayer={rejoinPlayer}
