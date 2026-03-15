@@ -218,23 +218,59 @@ export default function ScoreBoard({
       {/* ── Sticky header ── */}
       <header className={`sticky top-0 z-30 flex-shrink-0
         ${isDark ? 'glass-dark border-b border-casino-green-light/30' : 'bg-white/90 border-b border-emerald-100 backdrop-blur-md'} shadow-lg`}>
-        <div className="px-4 py-2.5 flex items-center justify-between max-w-6xl mx-auto w-full gap-2">
-          {/* Title + pool */}
-          <div className="flex items-center gap-3 min-w-0">
-            <span className="text-lg flex-shrink-0">🃏</span>
-            <div className="min-w-0">
-              <h1 className={`text-sm font-black leading-tight whitespace-nowrap ${isDark ? 'text-casino-gold' : 'text-emerald-800'}`}>
+        <div className="px-4 pt-2.5 pb-1.5 max-w-6xl mx-auto w-full">
+          {/* Row 1: title + controls */}
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="text-lg flex-shrink-0">🃏</span>
+              <h1 className={`text-sm font-black whitespace-nowrap ${isDark ? 'text-casino-gold' : 'text-emerald-800'}`}>
                 Indian Rummy
               </h1>
-              <p className={`text-xs whitespace-nowrap ${isDark ? 'text-emerald-400' : 'text-emerald-500'}`}>
-                R{rounds} · {activePlayers.length} active · {outThreshold}pts
-              </p>
             </div>
 
-            {/* Prize pool pill — prominent */}
+            {/* Controls */}
+            <div className="flex items-center gap-1.5 flex-shrink-0">
+              <button onClick={onToggleTheme}
+                className={`w-8 h-8 rounded-full flex items-center justify-center transition-all active:scale-90 text-sm
+                  ${isDark ? 'bg-casino-green-light/60 text-casino-gold hover:bg-casino-green-light' : 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'}`}>
+                {isDark ? '☀️' : '🌙'}
+              </button>
+
+              <button onClick={handleUndoClick} disabled={rounds === 0}
+                className={`h-8 px-2.5 rounded-full flex items-center gap-1 text-xs font-bold transition-all active:scale-90
+                  ${rounds === 0
+                    ? 'opacity-30 cursor-not-allowed ' + (isDark ? 'bg-casino-green-light/30 text-gray-500' : 'bg-gray-100 text-gray-400')
+                    : confirmUndo
+                      ? 'bg-orange-500 text-white animate-pulse'
+                      : isDark ? 'bg-casino-green-light/60 text-white hover:bg-casino-green-light' : 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
+                  }`}>
+                {confirmUndo ? '⚠️ Confirm' : '↩ Undo'}
+              </button>
+
+              {activePlayers.length >= 2 && (
+                <button onClick={() => setShowSplitModal(true)}
+                  className={`h-8 px-3 rounded-full flex items-center gap-1 text-xs font-bold transition-all active:scale-90
+                    ${isDark ? 'bg-casino-gold/20 text-casino-gold border border-casino-gold/40 hover:bg-casino-gold/30' : 'bg-amber-100 text-amber-700 border border-amber-300 hover:bg-amber-200'}`}>
+                  🏁 Finish
+                </button>
+              )}
+
+              <button onClick={() => setShowConfirmReset(true)}
+                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm transition-all active:scale-90
+                  ${isDark ? 'bg-red-900/60 text-red-400 hover:bg-red-900' : 'bg-red-50 text-red-600 hover:bg-red-100'}`}>
+                🔄
+              </button>
+            </div>
+          </div>
+
+          {/* Row 2: stats + pool pill */}
+          <div className="flex items-center justify-between mt-1">
+            <p className={`text-xs whitespace-nowrap ${isDark ? 'text-emerald-400' : 'text-emerald-500'}`}>
+              R{rounds} · {activePlayers.length} active · {outThreshold}pts
+            </p>
             <button
               onClick={() => { setShowSetPool(v => !v); setPoolInput(buyInAmount > 0 ? String(buyInAmount) : ''); }}
-              className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full border font-bold text-sm transition-all active:scale-95
+              className={`flex-shrink-0 flex items-center gap-1 px-2.5 py-1 rounded-full border font-bold text-xs transition-all active:scale-95
                 ${totalPool > 0
                   ? isDark
                     ? 'bg-casino-gold/20 border-casino-gold/50 text-casino-gold hover:bg-casino-gold/30'
@@ -246,40 +282,6 @@ export default function ScoreBoard({
               title="Set buy-in amount"
             >
               💰 {totalPool > 0 ? `₹${totalPool}` : 'Set Pool'}
-            </button>
-          </div>
-
-          {/* Controls */}
-          <div className="flex items-center gap-1.5 flex-shrink-0">
-            <button onClick={onToggleTheme}
-              className={`w-8 h-8 rounded-full flex items-center justify-center transition-all active:scale-90 text-sm
-                ${isDark ? 'bg-casino-green-light/60 text-casino-gold hover:bg-casino-green-light' : 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'}`}>
-              {isDark ? '☀️' : '🌙'}
-            </button>
-
-            <button onClick={handleUndoClick} disabled={rounds === 0}
-              className={`h-8 px-2.5 rounded-full flex items-center gap-1 text-xs font-bold transition-all active:scale-90
-                ${rounds === 0
-                  ? 'opacity-30 cursor-not-allowed ' + (isDark ? 'bg-casino-green-light/30 text-gray-500' : 'bg-gray-100 text-gray-400')
-                  : confirmUndo
-                    ? 'bg-orange-500 text-white animate-pulse'
-                    : isDark ? 'bg-casino-green-light/60 text-white hover:bg-casino-green-light' : 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
-                }`}>
-              {confirmUndo ? '⚠️ Confirm' : '↩ Undo'}
-            </button>
-
-            {activePlayers.length >= 2 && (
-              <button onClick={() => setShowSplitModal(true)}
-                className={`h-8 px-3 rounded-full flex items-center gap-1 text-xs font-bold transition-all active:scale-90
-                  ${isDark ? 'bg-casino-gold/20 text-casino-gold border border-casino-gold/40 hover:bg-casino-gold/30' : 'bg-amber-100 text-amber-700 border border-amber-300 hover:bg-amber-200'}`}>
-                🏁 Finish
-              </button>
-            )}
-
-            <button onClick={() => setShowConfirmReset(true)}
-              className={`w-8 h-8 rounded-full flex items-center justify-center text-sm transition-all active:scale-90
-                ${isDark ? 'bg-red-900/60 text-red-400 hover:bg-red-900' : 'bg-red-50 text-red-600 hover:bg-red-100'}`}>
-              🔄
             </button>
           </div>
         </div>
