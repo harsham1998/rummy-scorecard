@@ -153,18 +153,19 @@ function PastGameModal({ game, onClose, isDark }) {
 
         {/* ── Score table ── */}
         <div className="flex-1 overflow-y-auto px-4 pt-4 pb-6">
-          <div className={`rounded-2xl overflow-hidden shadow-lg border
-            ${isDark ? 'glass border-casino-green-light/30' : 'bg-white border-emerald-100'}`}>
+          <div className={`rounded-2xl overflow-hidden shadow-lg border mx-auto
+            ${isDark ? 'glass border-casino-green-light/30' : 'bg-white border-emerald-100'}`}
+            style={{ maxWidth: `${48 + sorted.length * 72}px` }}>
             <div className="overflow-x-auto scrollbar-thin">
               <div style={{ minWidth: `${48 + sorted.length * 72}px` }}>
 
                 {/* Header row */}
                 <div className={`flex border-b ${isDark ? 'border-casino-green-light/30 bg-casino-green/60' : 'border-emerald-100 bg-emerald-50'}`}>
                   <div className={`w-12 flex-shrink-0 px-2 py-3 text-xs font-bold ${isDark ? 'text-casino-gold' : 'text-emerald-600'}`}>Rnd</div>
-                  <div className="flex flex-1">
+                  <div className="flex">
                     {sorted.map(player => (
                       <div key={player.id}
-                        className={`flex-1 min-w-[72px] px-1 py-3 text-xs font-bold text-center truncate
+                        className={`w-[72px] flex-shrink-0 px-1 py-3 text-xs font-bold text-center truncate
                           ${player.isOut
                             ? isDark ? 'text-gray-500 line-through' : 'text-gray-400 line-through'
                             : winner?.id === player.id ? isDark ? 'text-casino-gold' : 'text-amber-600'
@@ -186,12 +187,12 @@ function PastGameModal({ game, onClose, isDark }) {
                         {roundIdx + 1}
                       </span>
                     </div>
-                    <div className="flex flex-1">
+                    <div className="flex">
                       {sorted.map(player => {
                         const score = player.scores[roundIdx];
                         return (
                           <div key={player.id}
-                            className={`flex-1 min-w-[72px] px-1 py-2.5 text-center text-sm
+                            className={`w-[72px] flex-shrink-0 px-1 py-2.5 text-center text-sm
                               ${SCORE_BG(score, isDark)} ${SCORE_COLOR(score, isDark)}`}>
                             {score === null || score === undefined
                               ? <span className={`text-xs ${isDark ? 'text-gray-600' : 'text-gray-300'}`}>—</span>
@@ -206,10 +207,10 @@ function PastGameModal({ game, onClose, isDark }) {
                 {/* Totals row */}
                 <div className={`flex border-t-2 ${isDark ? 'border-casino-gold/30 bg-casino-green/80' : 'border-emerald-200 bg-emerald-50'}`}>
                   <div className={`w-12 flex-shrink-0 px-2 py-2.5 text-xs font-black ${isDark ? 'text-casino-gold' : 'text-emerald-700'}`}>Tot</div>
-                  <div className="flex flex-1">
+                  <div className="flex">
                     {sorted.map(player => (
                       <div key={player.id}
-                        className={`flex-1 min-w-[72px] px-1 py-2.5 text-center text-sm font-black
+                        className={`w-[72px] flex-shrink-0 px-1 py-2.5 text-center text-sm font-black
                           ${player.isOut ? isDark ? 'text-red-400' : 'text-red-500'
                             : winner?.id === player.id ? isDark ? 'text-casino-gold' : 'text-amber-600'
                             : isDark ? 'text-white' : 'text-emerald-900'}`}>
@@ -219,6 +220,25 @@ function PastGameModal({ game, onClose, isDark }) {
                     ))}
                   </div>
                 </div>
+
+                {/* Split row */}
+                {game.splitResults && (
+                  <div className={`flex border-t ${isDark ? 'border-casino-green-light/30 bg-casino-gold/5' : 'border-amber-100 bg-amber-50'}`}>
+                    <div className={`w-12 flex-shrink-0 px-2 py-2.5 text-xs font-black ${isDark ? 'text-casino-gold' : 'text-amber-600'}`}>💰</div>
+                    <div className="flex">
+                      {sorted.map(player => {
+                        const amt = game.splitResults[player.id] ?? 0;
+                        return (
+                          <div key={player.id}
+                            className={`w-[72px] flex-shrink-0 px-1 py-2.5 text-center text-xs font-black
+                              ${amt > 0 ? isDark ? 'text-casino-gold' : 'text-amber-600' : isDark ? 'text-gray-600' : 'text-gray-400'}`}>
+                            ₹{amt}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
 
               </div>
             </div>
