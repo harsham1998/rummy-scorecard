@@ -18,6 +18,132 @@ const RULES = [
 ];
 const RANK_EMOJIS = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟'];
 
+const computePlayerStats = (name, pastGames) => {
+  let played = 0, won = 0, invested = 0, totalWon = 0;
+  const recentGames = [];
+  for (const game of pastGames) {
+    const p = game.players.find(pl => pl.name === name);
+    if (!p) continue;
+    played++;
+    const inv = (p.contributions || 1) * (game.buyInAmount || 0);
+    invested += inv;
+    const isWinner = game.winner?.name === name;
+    if (isWinner) won++;
+    let winAmt = 0;
+    if (game.splitResults?.[p.id] != null) winAmt = game.splitResults[p.id];
+    else if (isWinner) winAmt = game.totalPool || 0;
+    totalWon += winAmt;
+    recentGames.push({ date: game.date, isWinner, score: p.totalScore, winAmt, inv, rounds: game.rounds });
+  }
+  return {
+    played, won,
+    winPct: played > 0 ? Math.round((won / played) * 100) : 0,
+    invested, totalWon,
+    profit: totalWon - invested,
+    recentGames: recentGames.slice(0, 5),
+  };
+};
+
+function PlayerProfileModal({ name, pastGames, onClose, isDark }) {
+  const stats = computePlayerStats(name, pastGames);
+  const avatarEmojis = ['🎴', '🃏', '🎲', '♠', '♥', '♦', '♣'];
+  const avatar = avatarEmojis[name.charCodeAt(0) % avatarEmojis.length];
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm animate-fadeIn" onClick={onClose} />
+      <div className={`relative z-10 w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden animate-bounce-in
+        ${isDark ? 'bg-casino-felt border border-casino-green-light/40' : 'bg-white border border-emerald-100'}`}>
+
+        {/* Header */}
+        <div className={`px-5 pt-5 pb-4 ${isDark ? 'bg-casino-green/60' : 'bg-emerald-50'}`}>
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-3">
+              <div className={`w-12 h-12 rounded-full flex items-center justify-center text-2xl
+                ${isDark ? 'bg-casino-gold/20 border border-casino-gold/40' : 'bg-emerald-100 border border-emerald-200'}`}>
+                {avatar}
+              </div>
+              <div>
+                <div className={`text-lg font-black ${isDark ? 'text-white' : 'text-emerald-900'}`}>{name}</div>
+                <div className={`text-xs ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>{stats.played} games played</div>
+              </div>
+            </div>
+            <button onClick={onClose}
+              className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-lg transition-all active:scale-90
+                ${isDark ? 'bg-casino-green-light/50 text-white' : 'bg-white text-gray-500 shadow-sm'}`}>×</button>
+          </div>
+
+          {/* Win rate bar */}
+          <div className={`text-xs font-semibold mb-1 ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>
+            Win rate · {stats.winPct}%
+          </div>
+          <div className={`h-2 rounded-full overflow-hidden ${isDark ? 'bg-casino-green-light/30' : 'bg-emerald-100'}`}>
+            <div
+              className={`h-full rounded-full transition-all ${stats.winPct >= 50 ? 'bg-emerald-500' : 'bg-orange-400'}`}
+              style={{ width: `${stats.winPct}%` }}
+            />
+          </div>
+        </div>
+
+        {/* Stats grid */}
+        <div className={`grid grid-cols-3 border-b ${isDark ? 'border-casino-green-light/20' : 'border-emerald-100'}`}>
+          {[
+            { label: 'Played', value: stats.played, color: '' },
+            { label: 'Won', value: stats.won, color: isDark ? 'text-emerald-400' : 'text-emerald-600' },
+            { label: 'Win %', value: `${stats.winPct}%`, color: stats.winPct >= 50 ? (isDark ? 'text-emerald-400' : 'text-emerald-600') : 'text-orange-400' },
+          ].map(({ label, value, color }) => (
+            <div key={label} className={`py-3 text-center border-r last:border-r-0 ${isDark ? 'border-casino-green-light/20' : 'border-emerald-100'}`}>
+              <div className={`text-xl font-black ${color || (isDark ? 'text-white' : 'text-emerald-900')}`}>{value}</div>
+              <div className={`text-xs mt-0.5 ${isDark ? 'text-emerald-500' : 'text-emerald-500'}`}>{label}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Money breakdown */}
+        <div className="px-5 py-4 space-y-2.5">
+          {[
+            { label: 'Total Invested', value: `₹${stats.invested}`, color: isDark ? 'text-white' : 'text-emerald-900' },
+            { label: 'Total Won', value: `₹${stats.totalWon}`, color: isDark ? 'text-casino-gold' : 'text-amber-600' },
+            {
+              label: 'Net Profit',
+              value: stats.profit === 0 ? '₹0' : `${stats.profit > 0 ? '+' : ''}₹${stats.profit}`,
+              color: stats.profit > 0 ? 'text-emerald-400' : stats.profit < 0 ? 'text-red-400' : isDark ? 'text-gray-400' : 'text-gray-500',
+              big: true,
+            },
+          ].map(({ label, value, color, big }) => (
+            <div key={label} className={`flex items-center justify-between py-2 border-b last:border-b-0
+              ${isDark ? 'border-casino-green-light/15' : 'border-emerald-50'}`}>
+              <span className={`text-sm ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>{label}</span>
+              <span className={`font-black ${big ? 'text-lg' : 'text-sm'} ${color}`}>{value}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Recent games */}
+        {stats.recentGames.length > 0 && (
+          <div className={`px-5 pb-5 border-t ${isDark ? 'border-casino-green-light/20' : 'border-emerald-100'}`}>
+            <div className={`text-xs font-bold mt-3 mb-2 ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>Recent Games</div>
+            <div className="space-y-1.5">
+              {stats.recentGames.map((g, i) => (
+                <div key={i} className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs
+                  ${isDark ? 'bg-casino-green/40' : 'bg-emerald-50'}`}>
+                  <span>{g.isWinner ? '🏆' : '🎴'}</span>
+                  <span className={`flex-1 ${isDark ? 'text-emerald-300' : 'text-emerald-700'}`}>{formatDate(g.date)}</span>
+                  <span className={`font-bold ${isDark ? 'text-white' : 'text-emerald-900'}`}>{g.score} pts</span>
+                  {g.winAmt > 0 && (
+                    <span className={`font-black ${isDark ? 'text-casino-gold' : 'text-amber-600'}`}>₹{g.winAmt}</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+      </div>
+    </div>
+  );
+}
+
 const formatDate = (isoString) => {
   const d = new Date(isoString);
   const now = new Date();
@@ -340,6 +466,7 @@ export default function GameSetup({ onStart, theme, pastGames = [], clearHistory
   const [starting, setStarting] = useState(false);
   const [selectedGame, setSelectedGame] = useState(null);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [selectedProfile, setSelectedProfile] = useState(null);
   const addInputRef = useRef(null);
 
   const isDark = theme === 'dark';
@@ -803,6 +930,55 @@ export default function GameSetup({ onStart, theme, pastGames = [], clearHistory
             </div>
           </div>
         )}
+
+        {/* ── Player Stats ── */}
+        {(() => {
+          const playersWithHistory = savedPlayers.filter(name =>
+            pastGames.some(g => g.players?.some(p => p.name === name))
+          );
+          if (playersWithHistory.length === 0) return null;
+          return (
+            <div className="mt-4">
+              <div className={`rounded-2xl overflow-hidden shadow-lg ${isDark ? 'glass border-casino-green-light/30' : 'bg-white border border-emerald-100'} border`}>
+                <div className={`px-4 py-3 border-b ${isDark ? 'border-casino-green-light/30 bg-casino-green/60' : 'border-emerald-100 bg-emerald-50'}`}>
+                  <h3 className={`text-sm font-black ${isDark ? 'text-casino-gold' : 'text-emerald-700'}`}>
+                    👤 Player Stats
+                  </h3>
+                </div>
+                <div className="grid grid-cols-2 gap-2 p-3">
+                  {playersWithHistory.map(name => {
+                    const s = computePlayerStats(name, pastGames);
+                    return (
+                      <button
+                        key={name}
+                        onClick={() => setSelectedProfile(name)}
+                        className={`flex flex-col gap-1 px-3 py-2.5 rounded-xl text-left transition-all active:scale-95
+                          ${isDark ? 'bg-casino-green/50 hover:bg-casino-green/70 border border-casino-green-light/30' : 'bg-emerald-50 hover:bg-emerald-100 border border-emerald-100'}`}
+                      >
+                        <div className={`text-sm font-black truncate ${isDark ? 'text-white' : 'text-emerald-900'}`}>{name}</div>
+                        <div className="flex items-center gap-2">
+                          <span className={`text-xs font-semibold ${s.winPct >= 50 ? (isDark ? 'text-emerald-400' : 'text-emerald-600') : 'text-orange-400'}`}>
+                            {s.winPct}% win
+                          </span>
+                          <span className={`text-xs ${isDark ? 'text-emerald-600' : 'text-emerald-400'}`}>·</span>
+                          <span className={`text-xs font-semibold ${s.profit > 0 ? 'text-emerald-400' : s.profit < 0 ? 'text-red-400' : isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                            {s.profit === 0 ? '₹0' : `${s.profit > 0 ? '+' : ''}₹${s.profit}`}
+                          </span>
+                        </div>
+                        <div className={`h-1 rounded-full overflow-hidden ${isDark ? 'bg-casino-green-light/20' : 'bg-emerald-100'}`}>
+                          <div
+                            className={`h-full rounded-full ${s.winPct >= 50 ? 'bg-emerald-500' : 'bg-orange-400'}`}
+                            style={{ width: `${s.winPct}%` }}
+                          />
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          );
+        })()}
       </div>
 
       {/* Past game detail modal */}
@@ -810,6 +986,16 @@ export default function GameSetup({ onStart, theme, pastGames = [], clearHistory
         <PastGameModal
           game={selectedGame}
           onClose={() => setSelectedGame(null)}
+          isDark={isDark}
+        />
+      )}
+
+      {/* Player profile modal */}
+      {selectedProfile && (
+        <PlayerProfileModal
+          name={selectedProfile}
+          pastGames={pastGames}
+          onClose={() => setSelectedProfile(null)}
           isDark={isDark}
         />
       )}
