@@ -151,8 +151,12 @@ function PastGameModal({ game, onClose, isDark }) {
           </div>
         </div>
 
-        {/* ── Score table ── */}
+        {/* ── Score table + Prize box ── */}
         <div className="flex-1 overflow-y-auto px-4 pt-4 pb-6">
+          <div className="flex gap-4 items-start flex-col lg:flex-row">
+
+          {/* Score table */}
+          <div className="flex-1 min-w-0">
           <div className={`rounded-2xl overflow-hidden shadow-lg border mx-auto
             ${isDark ? 'glass border-casino-green-light/30' : 'bg-white border-emerald-100'}`}
             style={{ maxWidth: `${48 + sorted.length * 72}px` }}>
@@ -257,6 +261,62 @@ function PastGameModal({ game, onClose, isDark }) {
               </span>
             ))}
           </div>
+          </div>{/* end score table col */}
+
+          {/* ── Prize Money Box ── */}
+          {game.totalPool > 0 && (
+            <div className="w-full lg:w-60 flex-shrink-0">
+              <div className={`rounded-2xl overflow-hidden shadow-lg border
+                ${isDark ? 'glass border-casino-gold/30' : 'bg-white border-amber-200'}`}>
+
+                {/* Header */}
+                <div className={`px-4 py-3 border-b ${isDark ? 'bg-casino-gold/10 border-casino-gold/20' : 'bg-amber-50 border-amber-100'}`}>
+                  <div className={`text-sm font-black ${isDark ? 'text-casino-gold' : 'text-amber-700'}`}>💰 Prize Money</div>
+                  <div className={`text-xs mt-0.5 ${isDark ? 'text-emerald-400' : 'text-amber-600'}`}>
+                    Total pool: ₹{game.totalPool}
+                  </div>
+                </div>
+
+                {/* Player rows */}
+                <div className={`divide-y ${isDark ? 'divide-casino-green-light/15' : 'divide-amber-50'}`}>
+                  {sorted.map((player, idx) => {
+                    const invested = game.buyInAmount ? (player.contributions || 1) * game.buyInAmount : 0;
+                    const won = game.splitResults?.[player.id] ?? (winner?.id === player.id ? game.totalPool : 0);
+                    const net = won - invested;
+                    const isWinner = winner?.id === player.id;
+                    return (
+                      <div key={player.id} className={`px-4 py-3 ${isWinner ? isDark ? 'bg-casino-gold/5' : 'bg-amber-50/60' : ''}`}>
+                        <div className="flex items-center gap-2 mb-1.5">
+                          <span className="text-sm">{RANK_EMOJIS[idx] || `#${idx+1}`}</span>
+                          <span className={`text-sm font-bold truncate flex-1
+                            ${isWinner ? isDark ? 'text-casino-gold' : 'text-amber-700' : isDark ? 'text-white' : 'text-emerald-900'}`}>
+                            {player.name}
+                          </span>
+                        </div>
+                        <div className="flex justify-between text-xs mb-1">
+                          <span className={isDark ? 'text-emerald-500' : 'text-gray-500'}>Invested</span>
+                          <span className={`font-semibold ${isDark ? 'text-emerald-300' : 'text-gray-700'}`}>₹{invested}</span>
+                        </div>
+                        <div className="flex justify-between text-xs mb-1">
+                          <span className={isDark ? 'text-emerald-500' : 'text-gray-500'}>Won</span>
+                          <span className={`font-bold ${won > 0 ? isDark ? 'text-casino-gold' : 'text-amber-600' : isDark ? 'text-gray-600' : 'text-gray-400'}`}>₹{won}</span>
+                        </div>
+                        <div className={`flex justify-between text-xs pt-1 border-t ${isDark ? 'border-casino-green-light/20' : 'border-amber-100'}`}>
+                          <span className={isDark ? 'text-emerald-500' : 'text-gray-500'}>Net</span>
+                          <span className={`font-black ${net > 0 ? 'text-emerald-400' : net < 0 ? 'text-red-400' : isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+                            {net > 0 ? `+₹${net}` : net < 0 ? `-₹${Math.abs(net)}` : '₹0'}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+              </div>
+            </div>
+          )}
+
+          </div>{/* end flex row */}
         </div>
 
       </div>
