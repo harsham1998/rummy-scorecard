@@ -39,9 +39,20 @@ const rowToEntry = (row) => ({
   splitResults: row.split_results,
 });
 
+const rowToInProgress = (row) => ({
+  id: row.id,
+  date: row.updated_at || row.created_at,
+  players: row.state?.players || [],
+  rounds: row.rounds || 0,
+  outThreshold: row.out_threshold,
+  buyInAmount: row.buy_in_amount,
+  state: row.state,
+});
+
 export const useGameStore = () => {
   const [state, setState] = useState(createInitialState());
   const [pastGames, setPastGames] = useState([]);
+  const [inProgressGames, setInProgressGames] = useState([]);
   const [loading, setLoading] = useState(true);
 
   // Refs to avoid stale closures and skip saves triggered by remote loads
@@ -52,18 +63,18 @@ export const useGameStore = () => {
   useEffect(() => {
     const init = async () => {
       try {
-        // Fetch in-progress game (most recent incomplete session)
-        const { data: activeGame } = await supabase
+        // Fetch all in-progress (incomplete) sessions
+        const { data: inProgress } = await supabase
           .from('game_sessions')
           .select('*')
           .eq('is_completed', false)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
+          .order('updated_at', { ascending: false });
 
-        if (activeGame?.state) {
-          sessionIdRef.current = activeGame.id;
-          setState(activeGame.state);
+        if (inProgress?.length) {
+          setInProgressGames(inProgress.map(rowToInProgress));
+          // Restore theme from most recent session
+          const savedTheme = inProgress[0].state?.theme;
+          if (savedTheme) setState(prev => ({ ...prev, theme: savedTheme }));
         }
 
         // Fetch completed game history
@@ -90,20 +101,34 @@ export const useGameStore = () => {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'game_sessions' }, (payload) => {
         if (payload.eventType === 'DELETE') {
           setPastGames(prev => prev.filter(g => g.id !== payload.old.id));
+          setInProgressGames(prev => prev.filter(g => g.id !== payload.old.id));
           return;
         }
         const row = payload.new;
-        if (!row.is_completed) return;
-        const entry = rowToEntry(row);
-        setPastGames(prev => {
-          const idx = prev.findIndex(g => g.id === entry.id);
-          if (idx >= 0) {
-            const updated = [...prev];
-            updated[idx] = entry;
-            return updated;
-          }
-          return [entry, ...prev].slice(0, 30);
-        });
+        if (row.is_completed) {
+          const entry = rowToEntry(row);
+          setPastGames(prev => {
+            const idx = prev.findIndex(g => g.id === entry.id);
+            if (idx >= 0) {
+              const updated = [...prev];
+              updated[idx] = entry;
+              return updated;
+            }
+            return [entry, ...prev].slice(0, 30);
+          });
+          setInProgressGames(prev => prev.filter(g => g.id !== row.id));
+        } else {
+          const inProg = rowToInProgress(row);
+          setInProgressGames(prev => {
+            const idx = prev.findIndex(g => g.id === inProg.id);
+            if (idx >= 0) {
+              const updated = [...prev];
+              updated[idx] = inProg;
+              return updated;
+            }
+            return [inProg, ...prev];
+          });
+        }
       })
       .subscribe();
 
@@ -335,11 +360,27 @@ export const useGameStore = () => {
 
   const pauseGame = useCallback(() => {
     updateState(prev => ({ ...prev, gameStarted: false }));
+    // Refresh in-progress list after Supabase save settles
+    setTimeout(async () => {
+      const { data } = await supabase
+        .from('game_sessions')
+        .select('*')
+        .eq('is_completed', false)
+        .order('updated_at', { ascending: false });
+      if (data) setInProgressGames(data.map(rowToInProgress));
+    }, 600);
   }, [updateState]);
 
-  const resumeGame = useCallback(() => {
-    updateState(prev => ({ ...prev, gameStarted: true }));
-  }, [updateState]);
+  const resumeGame = useCallback(async (sessionId) => {
+    const { data } = await supabase
+      .from('game_sessions')
+      .select('*')
+      .eq('id', sessionId)
+      .single();
+    if (!data?.state) return;
+    sessionIdRef.current = data.id;
+    setState({ ...data.state, gameStarted: true });
+  }, []);
 
   const clearHistory = useCallback(async () => {
     const { error } = await supabase
@@ -408,6 +449,7 @@ export const useGameStore = () => {
     computeSplit,
     updateBuyIn,
     pastGames,
+    inProgressGames,
     clearHistory,
     pauseGame,
     resumeGame,

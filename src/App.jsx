@@ -29,6 +29,7 @@ export default function App() {
     totalPool,
     buyInAmount,
     pastGames,
+    inProgressGames,
     clearHistory,
     loading,
     pauseGame,
@@ -62,7 +63,7 @@ export default function App() {
   };
 
   if (!gameStarted) {
-    return <GameSetup onStart={startGame} theme={theme} pastGames={pastGames} clearHistory={clearHistory} resumeGame={resumeGame} pausedPlayers={players} pausedRounds={rounds} />;
+    return <GameSetup onStart={startGame} theme={theme} pastGames={pastGames} clearHistory={clearHistory} resumeGame={resumeGame} inProgressGames={inProgressGames} />;
   }
 
   if (gameOver && winner) {

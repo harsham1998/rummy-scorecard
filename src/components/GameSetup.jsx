@@ -173,7 +173,7 @@ function PastGameModal({ game, onClose, isDark }) {
   );
 }
 
-export default function GameSetup({ onStart, theme, pastGames = [], clearHistory, resumeGame, pausedPlayers = [], pausedRounds = 0 }) {
+export default function GameSetup({ onStart, theme, pastGames = [], clearHistory, resumeGame, inProgressGames = [] }) {
   const [selectedNames, setSelectedNames] = useState([]); // ordered list of selected players
   const [savedPlayers, setSavedPlayers] = useState([]);
   const [showAddPlayer, setShowAddPlayer] = useState(false);
@@ -287,26 +287,39 @@ export default function GameSetup({ onStart, theme, pastGames = [], clearHistory
           </p>
         </div>
 
-        {/* ── In-Progress Game Resume Card ── */}
-        {pausedPlayers.length >= 2 && pausedRounds > 0 && (
-          <div className={`mb-4 rounded-2xl p-4 border-2 animate-slideDown flex items-center gap-4
-            ${isDark ? 'bg-casino-gold/10 border-casino-gold/40' : 'bg-amber-50 border-amber-300'}`}>
-            <div className="text-3xl flex-shrink-0">⏸️</div>
-            <div className="flex-1 min-w-0">
-              <div className={`text-sm font-black ${isDark ? 'text-casino-gold' : 'text-amber-700'}`}>
-                Game In Progress
-              </div>
-              <div className={`text-xs mt-0.5 truncate ${isDark ? 'text-emerald-400' : 'text-amber-600'}`}>
-                Round {pausedRounds} · {pausedPlayers.map(p => p.name).join(', ')}
-              </div>
+        {/* ── In-Progress Games List ── */}
+        {inProgressGames.length > 0 && (
+          <div className={`mb-4 rounded-2xl overflow-hidden border shadow-lg
+            ${isDark ? 'border-casino-gold/30 bg-casino-gold/5' : 'border-amber-200 bg-amber-50'}`}>
+            <div className={`px-4 py-2.5 flex items-center gap-2 border-b
+              ${isDark ? 'border-casino-gold/20 bg-casino-green/60' : 'border-amber-200 bg-amber-100'}`}>
+              <span>⏸️</span>
+              <h3 className={`text-sm font-black ${isDark ? 'text-casino-gold' : 'text-amber-700'}`}>
+                Games In Progress
+              </h3>
             </div>
-            <button
-              onClick={resumeGame}
-              className={`flex-shrink-0 px-4 py-2 rounded-xl font-black text-sm transition-all active:scale-95 shadow-md
-                ${isDark ? 'bg-casino-gold text-casino-felt hover:bg-casino-gold-light' : 'bg-amber-500 text-white hover:bg-amber-400'}`}
-            >
-              ▶ Resume
-            </button>
+            <div className="divide-y divide-amber-200/30">
+              {inProgressGames.map(game => (
+                <div key={game.id} className="flex items-center gap-3 px-4 py-3">
+                  <div className="flex-1 min-w-0">
+                    <div className={`text-sm font-bold truncate ${isDark ? 'text-white' : 'text-amber-900'}`}>
+                      {game.players.filter(p => !p.isOut).map(p => p.name).join(', ')}
+                    </div>
+                    <div className={`text-xs mt-0.5 ${isDark ? 'text-emerald-400' : 'text-amber-600'}`}>
+                      {formatDate(game.date)} · R{game.rounds} · Out@{game.outThreshold}
+                      {game.buyInAmount > 0 && ` · ₹${game.buyInAmount * game.players.length}`}
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => resumeGame(game.id)}
+                    className={`flex-shrink-0 px-3 py-1.5 rounded-xl font-black text-xs transition-all active:scale-95 shadow-sm
+                      ${isDark ? 'bg-casino-gold text-casino-felt hover:bg-casino-gold-light' : 'bg-amber-500 text-white hover:bg-amber-400'}`}
+                  >
+                    ▶ Resume
+                  </button>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
