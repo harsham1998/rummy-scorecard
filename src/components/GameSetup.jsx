@@ -29,145 +29,216 @@ const formatDate = (isoString) => {
   return d.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' }) + ` · ${time}`;
 };
 
+const SCORE_COLOR = (score, isDark) => {
+  if (score === null || score === undefined) return isDark ? 'text-gray-600' : 'text-gray-300';
+  if (score === 0) return isDark ? 'text-emerald-400 font-bold' : 'text-emerald-600 font-bold';
+  if (score >= 80) return isDark ? 'text-red-400 font-black' : 'text-red-600 font-black';
+  if (score >= 40) return isDark ? 'text-yellow-400 font-bold' : 'text-yellow-600 font-bold';
+  if (score >= 20) return isDark ? 'text-blue-400' : 'text-blue-600';
+  return isDark ? 'text-emerald-300' : 'text-emerald-700';
+};
+const SCORE_BG = (score, isDark) => {
+  if (score === null || score === undefined) return '';
+  if (score === 0) return isDark ? 'bg-emerald-500/10' : 'bg-emerald-50';
+  if (score >= 80) return isDark ? 'bg-red-500/10' : 'bg-red-50';
+  if (score >= 40) return isDark ? 'bg-yellow-500/10' : 'bg-yellow-50';
+  return '';
+};
+
 function PastGameModal({ game, onClose, isDark }) {
-  const [showRounds, setShowRounds] = useState(false);
   const sorted = [...game.players].sort((a, b) => a.totalScore - b.totalScore);
+  const winner = game.winner || sorted[0];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
-      <div className={`relative z-10 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-slideUp
-        ${isDark ? 'bg-casino-felt border border-casino-green-light/30' : 'bg-white border border-emerald-100'}`}>
+    <div className="fixed inset-0 z-50 flex flex-col animate-fadeIn">
+      {/* Full-screen backdrop */}
+      <div className={`flex-1 flex flex-col overflow-hidden ${isDark ? 'bg-casino-felt' : 'bg-emerald-50'}`}>
 
-        {/* Header */}
-        <div className={`flex items-center justify-between px-4 py-3 border-b
-          ${isDark ? 'border-casino-green-light/30 bg-casino-green/60' : 'border-emerald-100 bg-emerald-50'}`}>
-          <div>
-            <div className={`text-xs font-medium ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>
-              {formatDate(game.date)}
+        {/* ── Header ── */}
+        <div className={`flex-shrink-0 px-4 pt-3 pb-2 border-b shadow-lg
+          ${isDark ? 'glass-dark border-casino-green-light/30' : 'bg-white/90 border-emerald-100 backdrop-blur-md'}`}>
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="text-lg flex-shrink-0">🃏</span>
+              <div className="min-w-0">
+                <div className={`text-sm font-black whitespace-nowrap ${isDark ? 'text-casino-gold' : 'text-emerald-800'}`}>
+                  Game Summary
+                </div>
+              </div>
             </div>
-            <div className={`text-sm font-bold ${isDark ? 'text-white' : 'text-emerald-900'}`}>
-              {game.rounds} rounds · Out at {game.outThreshold} pts
-            </div>
+            <button onClick={onClose}
+              className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full font-bold text-xs transition-all active:scale-95
+                ${isDark ? 'bg-casino-green-light/60 text-white hover:bg-casino-green-light' : 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'}`}>
+              ← Back
+            </button>
           </div>
-          <button
-            onClick={onClose}
-            className={`w-8 h-8 rounded-full flex items-center justify-center text-lg transition-all active:scale-90
-              ${isDark ? 'bg-casino-green-light/40 text-white hover:bg-casino-green-light/60' : 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'}`}
-          >
-            ×
-          </button>
+          <div className={`text-xs mt-1 whitespace-nowrap ${isDark ? 'text-emerald-400' : 'text-emerald-500'}`}>
+            {formatDate(game.date)} · {game.rounds} rounds · Out@{game.outThreshold}pts
+            {game.totalPool > 0 && ` · 💰 ₹${game.totalPool}`}
+          </div>
         </div>
 
-        {/* Winner */}
-        <div className={`px-4 py-3 flex items-center gap-3 border-b
+        {/* ── Winner banner ── */}
+        <div className={`flex-shrink-0 flex items-center gap-3 px-4 py-2.5 border-b
           ${isDark ? 'bg-casino-gold/10 border-casino-green-light/20' : 'bg-amber-50 border-amber-100'}`}>
-          <span className="text-2xl">🏆</span>
+          <span className="text-xl">🏆</span>
           <div className="flex-1 min-w-0">
             <div className={`text-xs font-semibold ${isDark ? 'text-casino-gold/70' : 'text-amber-600'}`}>WINNER</div>
-            <div className={`text-lg font-black truncate ${isDark ? 'text-casino-gold' : 'text-amber-700'}`}>
-              {game.winner?.name}
+            <div className={`text-base font-black truncate ${isDark ? 'text-casino-gold' : 'text-amber-700'}`}>
+              {winner?.name} · {winner?.totalScore} pts
             </div>
           </div>
-          <div className="text-right flex-shrink-0">
-            <div className={`text-xl font-black ${isDark ? 'text-casino-gold' : 'text-amber-600'}`}>
-              {game.winner?.totalScore} pts
+          {game.splitResults && (
+            <div className={`text-xs text-right flex-shrink-0 ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>
+              Split game
             </div>
-            {game.totalPool > 0 && (
-              <div className={`text-xs font-semibold ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>
-                💰 ₹{game.totalPool}
-              </div>
-            )}
+          )}
+        </div>
+
+        {/* ── Player cards strip ── */}
+        <div className={`flex-shrink-0 px-4 py-3 border-b ${isDark ? 'border-casino-green-light/20' : 'border-emerald-100'}`}>
+          <div className="overflow-x-auto scrollbar-thin flex justify-center">
+            <div className="flex gap-2.5 pb-1 flex-shrink-0">
+              {sorted.map((player, idx) => {
+                const isWinner = winner?.id === player.id;
+                const invested = game.buyInAmount ? (player.contributions || 1) * game.buyInAmount : 0;
+                const splitAmt = game.splitResults?.[player.id];
+                return (
+                  <div key={player.id}
+                    className={`relative rounded-2xl p-3 border flex-shrink-0 w-[112px]
+                      ${player.isOut
+                        ? isDark ? 'bg-gray-800/60 border-gray-600/40 opacity-70' : 'bg-gray-100/80 border-gray-300 opacity-70'
+                        : isWinner
+                          ? isDark ? 'glass-gold border-casino-gold/50 shadow-lg' : 'bg-amber-50/90 border-amber-400 shadow-md'
+                          : isDark ? 'glass border-white/10 shadow-sm' : 'bg-white/90 border-emerald-200 shadow-sm'
+                      }`}>
+                    {isWinner && !player.isOut && (
+                      <div className="absolute top-1 left-1/2 -translate-x-1/2 text-base">👑</div>
+                    )}
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className={`text-xs font-bold ${isDark ? 'text-emerald-500' : 'text-emerald-500'}`}>
+                        {player.isOut ? '💀' : RANK_EMOJIS[idx] || `#${idx+1}`}
+                      </span>
+                      {invested > 0 && (
+                        <span className={`text-[10px] font-bold px-1 rounded ${isDark ? 'bg-casino-gold/15 text-casino-gold' : 'bg-amber-100 text-amber-700'}`}>
+                          ₹{invested}
+                        </span>
+                      )}
+                    </div>
+                    <div className={`text-xs font-black truncate mb-1
+                      ${player.isOut ? isDark ? 'text-gray-400 line-through' : 'text-gray-500 line-through' : isDark ? 'text-white' : 'text-emerald-900'}`}>
+                      {player.name}
+                    </div>
+                    <div className={`text-2xl font-black leading-none mb-1
+                      ${player.isOut ? isDark ? 'text-red-400' : 'text-red-500'
+                        : isWinner ? isDark ? 'text-casino-gold' : 'text-amber-600'
+                        : player.totalScore >= 150 ? isDark ? 'text-red-400' : 'text-red-600'
+                        : player.totalScore >= 100 ? isDark ? 'text-yellow-400' : 'text-yellow-600'
+                        : isDark ? 'text-emerald-300' : 'text-emerald-600'}`}>
+                      {player.totalScore}
+                    </div>
+                    {splitAmt != null && (
+                      <div className={`text-[10px] rounded-full px-1.5 py-0.5 font-bold text-center
+                        ${splitAmt > 0 ? isDark ? 'bg-casino-gold/20 text-casino-gold' : 'bg-amber-100 text-amber-700'
+                          : isDark ? 'bg-gray-700 text-gray-400' : 'bg-gray-100 text-gray-500'}`}>
+                        {splitAmt > 0 ? `₹${splitAmt}` : '₹0'}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
 
-        {/* Rankings */}
-        <div className={`max-h-64 overflow-y-auto divide-y ${isDark ? 'divide-casino-green-light/15' : 'divide-emerald-50'}`}>
-          {sorted.map((player, idx) => (
-            <div key={player.id} className={`flex items-center gap-3 px-4 py-2.5
-              ${idx === 0 ? (isDark ? 'bg-casino-gold/5' : 'bg-amber-50/50') : ''}`}>
-              <span className="text-lg w-7 text-center flex-shrink-0">{RANK_EMOJIS[idx] || `#${idx+1}`}</span>
-              <div className="flex-1 min-w-0">
-                <div className={`text-sm font-bold truncate
-                  ${player.isOut
-                    ? isDark ? 'text-red-400 line-through' : 'text-red-500 line-through'
-                    : idx === 0 ? (isDark ? 'text-casino-gold' : 'text-amber-700')
-                    : isDark ? 'text-white' : 'text-emerald-900'
-                  }`}>
-                  {player.name}
-                  {player.isOut && <span className="ml-1 text-xs no-underline" style={{textDecoration:'none'}}> OUT</span>}
-                </div>
-                {game.buyInAmount > 0 && (
-                  <div className={`text-xs ${isDark ? 'text-emerald-500' : 'text-emerald-500'}`}>
-                    ₹{(player.contributions || 1) * game.buyInAmount} invested
-                    {(player.contributions || 1) > 1 && ` · ${(player.contributions||1)-1} rejoin`}
-                  </div>
-                )}
-              </div>
-              <div className="text-right flex-shrink-0">
-                <div className={`text-base font-black
-                  ${player.isOut ? (isDark ? 'text-red-400' : 'text-red-500')
-                  : idx === 0 ? (isDark ? 'text-casino-gold' : 'text-amber-600')
-                  : isDark ? 'text-emerald-300' : 'text-emerald-700'}`}>
-                  {player.totalScore}
-                </div>
-                {game.splitResults && game.splitResults[player.id] != null && (
-                  <div className={`text-xs font-bold ${game.splitResults[player.id] > 0 ? (isDark ? 'text-casino-gold' : 'text-amber-600') : (isDark ? 'text-gray-500' : 'text-gray-400')}`}>
-                    ₹{game.splitResults[player.id]}
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
+        {/* ── Score table ── */}
+        <div className="flex-1 overflow-y-auto px-4 pt-4 pb-6">
+          <div className={`rounded-2xl overflow-hidden shadow-lg border
+            ${isDark ? 'glass border-casino-green-light/30' : 'bg-white border-emerald-100'}`}>
+            <div className="overflow-x-auto scrollbar-thin">
+              <div style={{ minWidth: `${48 + sorted.length * 72}px` }}>
 
-        {/* Round details toggle */}
-        {game.rounds > 0 && (
-          <div className={`border-t ${isDark ? 'border-casino-green-light/20' : 'border-emerald-100'}`}>
-            <button
-              onClick={() => setShowRounds(v => !v)}
-              className={`w-full py-2 text-xs font-semibold transition-colors
-                ${isDark ? 'text-emerald-400 hover:text-casino-gold' : 'text-emerald-600 hover:text-emerald-800'}`}
-            >
-              {showRounds ? '▲ Hide round scores' : '▼ Show round scores'}
-            </button>
-            {showRounds && (
-              <div className={`overflow-x-auto border-t ${isDark ? 'border-casino-green-light/20' : 'border-emerald-100'}`}>
-                <table className="w-full text-xs" style={{ minWidth: `${(sorted.length + 1) * 55}px` }}>
-                  <thead>
-                    <tr className={isDark ? 'bg-casino-green/60' : 'bg-emerald-50'}>
-                      <th className={`px-3 py-1.5 text-left font-bold ${isDark ? 'text-casino-gold' : 'text-emerald-700'}`}>Rnd</th>
-                      {sorted.map(p => (
-                        <th key={p.id} className={`px-2 py-1.5 text-center font-bold ${isDark ? 'text-emerald-300' : 'text-emerald-600'}`}>
-                          {p.name.slice(0, 5)}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {Array.from({ length: game.rounds }, (_, i) => (
-                      <tr key={i} className={`border-t ${isDark ? 'border-casino-green-light/15' : 'border-emerald-50'}`}>
-                        <td className={`px-3 py-1 font-semibold ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>{i + 1}</td>
-                        {sorted.map(p => {
-                          const s = p.scores[i];
-                          return (
-                            <td key={p.id} className={`px-2 py-1 text-center font-medium
-                              ${s == null ? isDark ? 'text-gray-600' : 'text-gray-300'
-                              : s >= 80 ? 'text-red-400'
-                              : s >= 40 ? 'text-yellow-400'
-                              : isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>
-                              {s ?? '—'}
-                            </td>
-                          );
-                        })}
-                      </tr>
+                {/* Header row */}
+                <div className={`flex border-b ${isDark ? 'border-casino-green-light/30 bg-casino-green/60' : 'border-emerald-100 bg-emerald-50'}`}>
+                  <div className={`w-12 flex-shrink-0 px-2 py-3 text-xs font-bold ${isDark ? 'text-casino-gold' : 'text-emerald-600'}`}>Rnd</div>
+                  <div className="flex flex-1">
+                    {sorted.map(player => (
+                      <div key={player.id}
+                        className={`flex-1 min-w-[72px] px-1 py-3 text-xs font-bold text-center truncate
+                          ${player.isOut
+                            ? isDark ? 'text-gray-500 line-through' : 'text-gray-400 line-through'
+                            : winner?.id === player.id ? isDark ? 'text-casino-gold' : 'text-amber-600'
+                            : isDark ? 'text-emerald-300' : 'text-emerald-700'}`}>
+                        {player.name}
+                      </div>
                     ))}
-                  </tbody>
-                </table>
+                  </div>
+                </div>
+
+                {/* Round rows */}
+                {Array.from({ length: game.rounds }, (_, roundIdx) => (
+                  <div key={roundIdx}
+                    className={`flex border-b last:border-0 transition-colors
+                      ${isDark ? 'border-casino-green-light/15 hover:bg-casino-green/20' : 'border-emerald-50 hover:bg-emerald-50/50'}`}>
+                    <div className="w-12 flex-shrink-0 px-2 py-2.5 flex items-center">
+                      <span className={`text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center flex-shrink-0
+                        ${isDark ? 'bg-casino-green-light/50 text-casino-gold' : 'bg-emerald-100 text-emerald-700'}`}>
+                        {roundIdx + 1}
+                      </span>
+                    </div>
+                    <div className="flex flex-1">
+                      {sorted.map(player => {
+                        const score = player.scores[roundIdx];
+                        return (
+                          <div key={player.id}
+                            className={`flex-1 min-w-[72px] px-1 py-2.5 text-center text-sm
+                              ${SCORE_BG(score, isDark)} ${SCORE_COLOR(score, isDark)}`}>
+                            {score === null || score === undefined
+                              ? <span className={`text-xs ${isDark ? 'text-gray-600' : 'text-gray-300'}`}>—</span>
+                              : score === 0 ? '🏆' : score}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+
+                {/* Totals row */}
+                <div className={`flex border-t-2 ${isDark ? 'border-casino-gold/30 bg-casino-green/80' : 'border-emerald-200 bg-emerald-50'}`}>
+                  <div className={`w-12 flex-shrink-0 px-2 py-2.5 text-xs font-black ${isDark ? 'text-casino-gold' : 'text-emerald-700'}`}>Tot</div>
+                  <div className="flex flex-1">
+                    {sorted.map(player => (
+                      <div key={player.id}
+                        className={`flex-1 min-w-[72px] px-1 py-2.5 text-center text-sm font-black
+                          ${player.isOut ? isDark ? 'text-red-400' : 'text-red-500'
+                            : winner?.id === player.id ? isDark ? 'text-casino-gold' : 'text-amber-600'
+                            : isDark ? 'text-white' : 'text-emerald-900'}`}>
+                        {player.totalScore}
+                        {winner?.id === player.id && !player.isOut && <span className="ml-0.5 text-xs">👑</span>}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
               </div>
-            )}
+            </div>
           </div>
-        )}
+
+          {/* Legend */}
+          <div className="flex flex-wrap gap-1.5 mt-3">
+            {[
+              { color: isDark ? 'text-emerald-400' : 'text-emerald-600', label: '🏆 Won' },
+              { color: isDark ? 'text-blue-400' : 'text-blue-600', label: '🏃 20 Drop' },
+              { color: isDark ? 'text-yellow-400' : 'text-yellow-600', label: '⚠️ 40 Mid' },
+              { color: isDark ? 'text-red-400' : 'text-red-600', label: '💀 80 Full' },
+            ].map(({ color, label }) => (
+              <span key={label} className={`text-xs font-medium px-2 py-0.5 rounded-full ${isDark ? 'bg-casino-green/60' : 'bg-white shadow-sm'} ${color}`}>
+                {label}
+              </span>
+            ))}
+          </div>
+        </div>
+
       </div>
     </div>
   );
