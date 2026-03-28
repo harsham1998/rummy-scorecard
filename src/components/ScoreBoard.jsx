@@ -450,8 +450,7 @@ export default function ScoreBoard({
                                   ? isDark ? 'text-casino-gold' : 'text-amber-600'
                                   : isDark ? 'text-emerald-300' : 'text-emerald-700'
                             }`}>
-                          {isTurn && <span className="mr-0.5">▶</span>}
-                          {player.name}
+                          <span className={isTurn ? 'animate-pulse' : ''}>{player.name}</span>
                           {player.isOut && <span className="ml-0.5 no-underline" style={{ textDecoration: 'none' }}>💀</span>}
                         </div>
                         );
