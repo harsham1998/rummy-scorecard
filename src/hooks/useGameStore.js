@@ -435,26 +435,21 @@ export const useGameStore = () => {
 
     const totalDrops = active.reduce((sum, p) => sum + dropChancesMap[p.id], 0);
 
+    const roundTo50 = (v) => Math.round(v / 50) * 50;
+    const leader = active.reduce((min, p) => p.totalScore < min.totalScore ? p : min, active[0]);
+
     if (totalDrops === 0) {
       // All in no-drop zone — equal split
-      const equalShare = Math.floor(pool / active.length);
-      active.forEach(p => { splits[p.id] = equalShare; });
-      const remainder = pool - equalShare * active.length;
-      if (remainder > 0) {
-        const leader = active.reduce((min, p) => p.totalScore < min.totalScore ? p : min, active[0]);
-        splits[leader.id] += remainder;
-      }
+      active.forEach(p => { splits[p.id] = roundTo50(pool / active.length); });
     } else {
       // Proportional split: each player gets share proportional to their drop chances
       active.forEach(p => {
-        splits[p.id] = Math.floor((dropChancesMap[p.id] / totalDrops) * pool);
+        splits[p.id] = roundTo50((dropChancesMap[p.id] / totalDrops) * pool);
       });
-      const remainder = pool - active.reduce((sum, p) => sum + splits[p.id], 0);
-      if (remainder > 0) {
-        const leader = active.reduce((min, p) => p.totalScore < min.totalScore ? p : min, active[0]);
-        splits[leader.id] += remainder;
-      }
     }
+    // Adjust leader's share so total exactly equals pool
+    const diff = pool - active.reduce((sum, p) => sum + splits[p.id], 0);
+    if (diff !== 0) splits[leader.id] += diff;
 
     return splits;
   }, [state.players, state.outThreshold, state.buyInAmount]);
