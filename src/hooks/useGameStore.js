@@ -426,33 +426,36 @@ export const useGameStore = () => {
     const active = state.players.filter(p => !p.isOut);
     const splits = {};
     state.players.forEach(p => { splits[p.id] = 0; });
-    if (active.length === 0) return splits;
+    if (active.length === 0 || pool === 0) return splits;
 
     const dropChancesMap = {};
     active.forEach(p => {
       dropChancesMap[p.id] = Math.floor(Math.max(0, threshold - p.totalScore) / 20);
     });
-    if (pool === 0) return splits;
 
-    const maxDrops = Math.max(...active.map(p => dropChancesMap[p.id]));
-    const topGroup = active.filter(p => dropChancesMap[p.id] === maxDrops);
-    const totalPremium = Math.min(pool, maxDrops * buyIn * topGroup.length);
-    const premiumPerTopPlayer = Math.floor(totalPremium / topGroup.length);
-    const remaining = pool - totalPremium;
-    const equalBase = Math.floor(remaining / active.length);
+    const totalDrops = active.reduce((sum, p) => sum + dropChancesMap[p.id], 0);
 
-    active.forEach(p => { splits[p.id] = equalBase; });
-    topGroup.forEach((p, i) => {
-      splits[p.id] += i === topGroup.length - 1
-        ? totalPremium - premiumPerTopPlayer * (topGroup.length - 1)
-        : premiumPerTopPlayer;
-    });
-
-    const baseRemainder = remaining - equalBase * active.length;
-    if (baseRemainder > 0) {
-      const leader = active.reduce((min, p) => p.totalScore < min.totalScore ? p : min, active[0]);
-      splits[leader.id] += baseRemainder;
+    if (totalDrops === 0) {
+      // All in no-drop zone — equal split
+      const equalShare = Math.floor(pool / active.length);
+      active.forEach(p => { splits[p.id] = equalShare; });
+      const remainder = pool - equalShare * active.length;
+      if (remainder > 0) {
+        const leader = active.reduce((min, p) => p.totalScore < min.totalScore ? p : min, active[0]);
+        splits[leader.id] += remainder;
+      }
+    } else {
+      // Proportional split: each player gets share proportional to their drop chances
+      active.forEach(p => {
+        splits[p.id] = Math.floor((dropChancesMap[p.id] / totalDrops) * pool);
+      });
+      const remainder = pool - active.reduce((sum, p) => sum + splits[p.id], 0);
+      if (remainder > 0) {
+        const leader = active.reduce((min, p) => p.totalScore < min.totalScore ? p : min, active[0]);
+        splits[leader.id] += remainder;
+      }
     }
+
     return splits;
   }, [state.players, state.outThreshold, state.buyInAmount]);
 
