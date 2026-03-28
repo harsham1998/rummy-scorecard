@@ -445,6 +445,13 @@ export default function ScoreBoard({
                                   ? isDark ? 'text-casino-gold' : 'text-amber-600'
                                   : isDark ? 'text-emerald-300' : 'text-emerald-700'
                             }`}>
+                          {isTurn && (
+                            <div className="flex justify-center mb-0.5">
+                              <span className={`text-[9px] font-black px-2 py-0.5 rounded-full ${isDark ? 'bg-blue-500 text-white' : 'bg-blue-500 text-white'}`}>
+                                Turn
+                              </span>
+                            </div>
+                          )}
                           {player.name}
                           {player.isOut && <span className="ml-0.5 no-underline" style={{ textDecoration: 'none' }}>💀</span>}
                         </div>
