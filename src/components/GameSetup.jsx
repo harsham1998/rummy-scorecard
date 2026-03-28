@@ -28,15 +28,18 @@ const computePlayerStats = (name, pastGames) => {
     const inv = (p.contributions || 1) * (game.buyInAmount || 0);
     invested += inv;
     const isWinner = game.winner?.name === name;
-    if (isWinner) won++;
+    // Count split recipients as winners too
+    const hasSplit = game.splitResults != null && game.splitResults[p.id] > 0;
+    if (isWinner || hasSplit) won++;
     let winAmt = 0;
     if (game.splitResults?.[p.id] != null) winAmt = game.splitResults[p.id];
     else if (isWinner) winAmt = game.totalPool || 0;
     totalWon += winAmt;
-    recentGames.push({ date: game.date, isWinner, score: p.totalScore, winAmt, inv, rounds: game.rounds });
+    recentGames.push({ date: game.date, isWinner: isWinner || hasSplit, score: p.totalScore, winAmt, inv, rounds: game.rounds });
   }
   return {
     played, won,
+    lost: played - won,
     winPct: played > 0 ? Math.round((won / played) * 100) : 0,
     invested, totalWon,
     profit: totalWon - invested,
@@ -929,7 +932,7 @@ export default function GameSetup({ onStart, theme, pastGames = [], clearHistory
               </div>
 
               <div className={`divide-y ${isDark ? 'divide-casino-green-light/15' : 'divide-emerald-50'}`}>
-                {pastGames.map((game) => (
+                {pastGames.slice(0, 3).map((game) => (
                   <button
                     key={game.id}
                     onClick={() => setSelectedGame(game)}
@@ -975,12 +978,13 @@ export default function GameSetup({ onStart, theme, pastGames = [], clearHistory
                 <table className="w-full text-sm">
                   <thead>
                     <tr className={`text-xs font-bold border-b ${isDark ? 'text-emerald-500 border-casino-green-light/20' : 'text-emerald-600 border-emerald-100'}`}>
-                      <th className="text-left px-4 py-2 w-6">#</th>
+                      <th className="text-left px-3 py-2 w-6">#</th>
                       <th className="text-left px-2 py-2">Player</th>
-                      <th className="text-center px-2 py-2">G</th>
-                      <th className="text-center px-2 py-2">W</th>
-                      <th className="text-center px-2 py-2">Win%</th>
-                      <th className="text-right px-4 py-2">Profit</th>
+                      <th className="text-center px-1 py-2">G</th>
+                      <th className="text-center px-1 py-2">L</th>
+                      <th className="text-center px-1 py-2">₹In</th>
+                      <th className="text-center px-1 py-2">Win%</th>
+                      <th className="text-right px-3 py-2">Profit</th>
                     </tr>
                   </thead>
                   <tbody className={`divide-y ${isDark ? 'divide-casino-green-light/10' : 'divide-emerald-50'}`}>
@@ -993,13 +997,16 @@ export default function GameSetup({ onStart, theme, pastGames = [], clearHistory
                           onClick={() => setSelectedProfile(name)}
                           className={`cursor-pointer transition-colors ${isDark ? 'hover:bg-casino-green/40 active:bg-casino-green/60' : 'hover:bg-emerald-50 active:bg-emerald-100'}`}
                         >
-                          <td className={`px-4 py-2.5 text-xs font-bold ${isDark ? 'text-emerald-600' : 'text-emerald-400'}`}>
+                          <td className={`px-3 py-2.5 text-xs font-bold ${isDark ? 'text-emerald-600' : 'text-emerald-400'}`}>
                             {idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `${idx + 1}`}
                           </td>
-                          <td className={`px-2 py-2.5 font-bold truncate max-w-[100px] ${isDark ? 'text-white' : 'text-emerald-900'}`}>{name}</td>
-                          <td className={`px-2 py-2.5 text-center text-xs ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>{s.played}</td>
-                          <td className={`px-2 py-2.5 text-center text-xs font-bold ${isDark ? 'text-casino-gold' : 'text-amber-600'}`}>{s.won}</td>
-                          <td className="px-2 py-2.5 text-center">
+                          <td className={`px-2 py-2.5 font-bold truncate max-w-[80px] ${isDark ? 'text-white' : 'text-emerald-900'}`}>{name}</td>
+                          <td className={`px-1 py-2.5 text-center text-xs ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>{s.played}</td>
+                          <td className={`px-1 py-2.5 text-center text-xs font-bold ${isDark ? 'text-red-400' : 'text-red-500'}`}>{s.lost}</td>
+                          <td className={`px-1 py-2.5 text-center text-xs ${isDark ? 'text-emerald-500' : 'text-emerald-600'}`}>
+                            {s.invested > 0 ? `₹${s.invested}` : '—'}
+                          </td>
+                          <td className="px-1 py-2.5 text-center">
                             <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full
                               ${s.winPct >= 50
                                 ? isDark ? 'bg-emerald-900/50 text-emerald-400' : 'bg-emerald-100 text-emerald-700'
@@ -1007,7 +1014,7 @@ export default function GameSetup({ onStart, theme, pastGames = [], clearHistory
                               {s.winPct}%
                             </span>
                           </td>
-                          <td className={`px-4 py-2.5 text-right text-xs font-bold
+                          <td className={`px-3 py-2.5 text-right text-xs font-bold
                             ${s.profit > 0 ? 'text-emerald-400' : s.profit < 0 ? 'text-red-400' : isDark ? 'text-gray-500' : 'text-gray-400'}`}>
                             {s.profit === 0 ? '—' : `${s.profit > 0 ? '+' : ''}₹${s.profit}`}
                           </td>
