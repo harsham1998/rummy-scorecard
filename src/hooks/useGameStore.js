@@ -12,6 +12,8 @@ const createInitialState = () => ({
   buyInAmount: 0,
   splitResults: null,
   roundHistory: [],
+  playerSequence: [],
+  currentTurnPlayerId: null,
 });
 
 const computeRankings = (players) => {
@@ -184,6 +186,7 @@ export const useGameStore = () => {
       contributions: 1,
     }));
 
+    const sequence = players.map(p => p.id);
     const newState = {
       gameStarted: true,
       players: computeRankings(players),
@@ -195,6 +198,8 @@ export const useGameStore = () => {
       buyInAmount: Number(buyInAmount) || 0,
       splitResults: null,
       roundHistory: [],
+      playerSequence: sequence,
+      currentTurnPlayerId: sequence[0] || null,
     };
 
     setState(newState); // direct setState — does NOT trigger pendingSave
@@ -254,6 +259,16 @@ export const useGameStore = () => {
           : [...ranked].sort((a, b) => a.totalScore - b.totalScore)[0])
         : null;
 
+      // Advance turn to next active player in sequence
+      const seq = prev.playerSequence?.length ? prev.playerSequence : ranked.map(p => p.id);
+      const activeIds = new Set(activePlayers.map(p => p.id));
+      const curIdx = seq.indexOf(prev.currentTurnPlayerId);
+      let nextTurnId = prev.currentTurnPlayerId;
+      for (let i = 1; i <= seq.length; i++) {
+        const cand = seq[(curIdx + i) % seq.length];
+        if (activeIds.has(cand)) { nextTurnId = cand; break; }
+      }
+
       return {
         ...prev,
         players: ranked,
@@ -261,6 +276,8 @@ export const useGameStore = () => {
         gameOver,
         winner,
         roundHistory: [...prev.roundHistory, roundScores],
+        playerSequence: seq,
+        currentTurnPlayerId: gameOver ? prev.currentTurnPlayerId : nextTurnId,
       };
     });
   }, [updateState]);
@@ -293,15 +310,26 @@ export const useGameStore = () => {
   }, [updateState]);
 
   const resetGame = useCallback(() => {
-    if (sessionIdRef.current) {
+    if (sessionIdRef.current && !state.gameOver) {
+      // Only delete if game is still in progress (not completed — completed games stay in history)
       supabase
         .from('game_sessions')
         .delete()
         .eq('id', sessionIdRef.current)
         .then(({ error }) => { if (error) console.error('Failed to delete session:', error); });
-      sessionIdRef.current = null;
     }
+    sessionIdRef.current = null;
     setState(prev => ({ ...createInitialState(), theme: prev.theme }));
+  }, [state.gameOver]);
+
+  const voidGame = useCallback(async (sessionId) => {
+    const { error } = await supabase
+      .from('game_sessions')
+      .delete()
+      .eq('id', sessionId);
+    if (!error) {
+      setInProgressGames(prev => prev.filter(g => g.id !== sessionId));
+    }
   }, []);
 
   const rejoinPlayer = useCallback((playerId) => {
@@ -402,7 +430,7 @@ export const useGameStore = () => {
 
     const dropChancesMap = {};
     active.forEach(p => {
-      dropChancesMap[p.id] = Math.max(1, Math.floor(Math.max(0, threshold - p.totalScore) / 20));
+      dropChancesMap[p.id] = Math.floor(Math.max(0, threshold - p.totalScore) / 20);
     });
     if (pool === 0) return splits;
 
@@ -453,5 +481,6 @@ export const useGameStore = () => {
     clearHistory,
     pauseGame,
     resumeGame,
+    voidGame,
   };
 };

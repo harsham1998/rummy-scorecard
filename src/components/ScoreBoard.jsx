@@ -149,6 +149,7 @@ export default function ScoreBoard({
   computeSplit,
   getLeader,
   clearEliminated,
+  currentTurnPlayerId,
 }) {
   const [showRoundInput, setShowRoundInput] = useState(false);
   const [showConfirmReset, setShowConfirmReset] = useState(false);
@@ -331,6 +332,7 @@ export default function ScoreBoard({
           <div className="flex gap-2.5 pb-1 flex-shrink-0">
             {sortedPlayers.map(player => {
               const isLeader = leader?.id === player.id;
+              const isCurrentTurn = !player.isOut && player.id === currentTurnPlayerId;
               const invested = buyInAmount ? (player.contributions || 1) * buyInAmount : 0;
               const lastScore = player.scores.length > 0 ? player.scores[player.scores.length - 1] : null;
               const ptsRemaining = outThreshold - player.totalScore;
@@ -342,11 +344,19 @@ export default function ScoreBoard({
                       ? isDark ? 'bg-gray-800/60 border-gray-600/40 opacity-70' : 'bg-gray-100/80 border-gray-300 opacity-70'
                       : isLeader
                         ? isDark ? 'glass-gold border-casino-gold/50 shadow-lg shadow-yellow-500/20 animate-pulse-gold' : 'bg-amber-50/90 border-amber-400 shadow-md shadow-amber-200'
-                        : isDark ? 'glass border-white/10 shadow-sm' : 'bg-white/90 border-emerald-200 shadow-sm'
+                        : isCurrentTurn
+                          ? isDark ? 'glass border-blue-400/70 shadow-lg shadow-blue-500/20 ring-2 ring-blue-400/50' : 'bg-blue-50/90 border-blue-400 shadow-md shadow-blue-100 ring-2 ring-blue-300/50'
+                          : isDark ? 'glass border-white/10 shadow-sm' : 'bg-white/90 border-emerald-200 shadow-sm'
                     }`}
                 >
                   {isLeader && !player.isOut && (
                     <div className="absolute top-1 left-1/2 -translate-x-1/2 text-base">👑</div>
+                  )}
+                  {isCurrentTurn && !isLeader && (
+                    <div className={`absolute top-1 left-1/2 -translate-x-1/2 text-[9px] font-black px-1.5 py-0.5 rounded-full whitespace-nowrap
+                      ${isDark ? 'bg-blue-500/80 text-white' : 'bg-blue-500 text-white'}`}>
+                      ▶ Turn
+                    </div>
                   )}
                   {/* Rank */}
                   <div className="flex items-center justify-between mb-1.5">

@@ -34,6 +34,8 @@ export default function App() {
     loading,
     pauseGame,
     resumeGame,
+    voidGame,
+    currentTurnPlayerId,
   } = useGameStore();
 
   // Apply theme to document
@@ -63,7 +65,7 @@ export default function App() {
   };
 
   if (!gameStarted) {
-    return <GameSetup onStart={startGame} theme={theme} pastGames={pastGames} clearHistory={clearHistory} resumeGame={resumeGame} inProgressGames={inProgressGames} />;
+    return <GameSetup onStart={startGame} theme={theme} pastGames={pastGames} clearHistory={clearHistory} resumeGame={resumeGame} inProgressGames={inProgressGames} voidGame={voidGame} />;
   }
 
   if (gameOver && winner) {
@@ -102,6 +104,7 @@ export default function App() {
       buyInAmount={buyInAmount}
       getLeader={getLeader}
       clearEliminated={clearEliminated}
+      currentTurnPlayerId={currentTurnPlayerId}
     />
   );
 }

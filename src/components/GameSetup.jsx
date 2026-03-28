@@ -452,7 +452,7 @@ function PastGameModal({ game, onClose, isDark }) {
   );
 }
 
-export default function GameSetup({ onStart, theme, pastGames = [], clearHistory, resumeGame, inProgressGames = [] }) {
+export default function GameSetup({ onStart, theme, pastGames = [], clearHistory, resumeGame, inProgressGames = [], voidGame }) {
   const [selectedNames, setSelectedNames] = useState([]); // ordered list of selected players
   const [savedPlayers, setSavedPlayers] = useState([]);
   const [showAddPlayer, setShowAddPlayer] = useState(false);
@@ -467,6 +467,7 @@ export default function GameSetup({ onStart, theme, pastGames = [], clearHistory
   const [selectedGame, setSelectedGame] = useState(null);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState(null);
+  const [voidConfirmId, setVoidConfirmId] = useState(null);
   const addInputRef = useRef(null);
 
   const isDark = theme === 'dark';
@@ -597,6 +598,32 @@ export default function GameSetup({ onStart, theme, pastGames = [], clearHistory
                   >
                     ▶ Resume
                   </button>
+                  {voidConfirmId === game.id ? (
+                    <div className="flex items-center gap-1 flex-shrink-0">
+                      <button
+                        onClick={() => { voidGame(game.id); setVoidConfirmId(null); }}
+                        className="px-2 py-1.5 rounded-xl font-black text-xs bg-red-600 text-white active:scale-95 transition-all"
+                      >
+                        Delete
+                      </button>
+                      <button
+                        onClick={() => setVoidConfirmId(null)}
+                        className={`px-2 py-1.5 rounded-xl font-black text-xs active:scale-95 transition-all
+                          ${isDark ? 'bg-casino-green-light/60 text-white' : 'bg-gray-200 text-gray-700'}`}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setVoidConfirmId(game.id)}
+                      className={`flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center font-black text-sm transition-all active:scale-95
+                        ${isDark ? 'bg-red-900/60 text-red-400 hover:bg-red-900' : 'bg-red-50 text-red-500 hover:bg-red-100'}`}
+                      title="Void game"
+                    >
+                      ×
+                    </button>
+                  )}
                 </div>
               ))}
             </div>
@@ -945,36 +972,49 @@ export default function GameSetup({ onStart, theme, pastGames = [], clearHistory
                     👤 Player Stats
                   </h3>
                 </div>
-                <div className="grid grid-cols-2 gap-2 p-3">
-                  {playersWithHistory.map(name => {
-                    const s = computePlayerStats(name, pastGames);
-                    return (
-                      <button
-                        key={name}
-                        onClick={() => setSelectedProfile(name)}
-                        className={`flex flex-col gap-1 px-3 py-2.5 rounded-xl text-left transition-all active:scale-95
-                          ${isDark ? 'bg-casino-green/50 hover:bg-casino-green/70 border border-casino-green-light/30' : 'bg-emerald-50 hover:bg-emerald-100 border border-emerald-100'}`}
-                      >
-                        <div className={`text-sm font-black truncate ${isDark ? 'text-white' : 'text-emerald-900'}`}>{name}</div>
-                        <div className="flex items-center gap-2">
-                          <span className={`text-xs font-semibold ${s.winPct >= 50 ? (isDark ? 'text-emerald-400' : 'text-emerald-600') : 'text-orange-400'}`}>
-                            {s.winPct}% win
-                          </span>
-                          <span className={`text-xs ${isDark ? 'text-emerald-600' : 'text-emerald-400'}`}>·</span>
-                          <span className={`text-xs font-semibold ${s.profit > 0 ? 'text-emerald-400' : s.profit < 0 ? 'text-red-400' : isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                            {s.profit === 0 ? '₹0' : `${s.profit > 0 ? '+' : ''}₹${s.profit}`}
-                          </span>
-                        </div>
-                        <div className={`h-1 rounded-full overflow-hidden ${isDark ? 'bg-casino-green-light/20' : 'bg-emerald-100'}`}>
-                          <div
-                            className={`h-full rounded-full ${s.winPct >= 50 ? 'bg-emerald-500' : 'bg-orange-400'}`}
-                            style={{ width: `${s.winPct}%` }}
-                          />
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className={`text-xs font-bold border-b ${isDark ? 'text-emerald-500 border-casino-green-light/20' : 'text-emerald-600 border-emerald-100'}`}>
+                      <th className="text-left px-4 py-2 w-6">#</th>
+                      <th className="text-left px-2 py-2">Player</th>
+                      <th className="text-center px-2 py-2">G</th>
+                      <th className="text-center px-2 py-2">W</th>
+                      <th className="text-center px-2 py-2">Win%</th>
+                      <th className="text-right px-4 py-2">Profit</th>
+                    </tr>
+                  </thead>
+                  <tbody className={`divide-y ${isDark ? 'divide-casino-green-light/10' : 'divide-emerald-50'}`}>
+                    {[...playersWithHistory]
+                      .map(name => ({ name, s: computePlayerStats(name, pastGames) }))
+                      .sort((a, b) => b.s.winPct - a.s.winPct || b.s.profit - a.s.profit)
+                      .map(({ name, s }, idx) => (
+                        <tr
+                          key={name}
+                          onClick={() => setSelectedProfile(name)}
+                          className={`cursor-pointer transition-colors ${isDark ? 'hover:bg-casino-green/40 active:bg-casino-green/60' : 'hover:bg-emerald-50 active:bg-emerald-100'}`}
+                        >
+                          <td className={`px-4 py-2.5 text-xs font-bold ${isDark ? 'text-emerald-600' : 'text-emerald-400'}`}>
+                            {idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `${idx + 1}`}
+                          </td>
+                          <td className={`px-2 py-2.5 font-bold truncate max-w-[100px] ${isDark ? 'text-white' : 'text-emerald-900'}`}>{name}</td>
+                          <td className={`px-2 py-2.5 text-center text-xs ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>{s.played}</td>
+                          <td className={`px-2 py-2.5 text-center text-xs font-bold ${isDark ? 'text-casino-gold' : 'text-amber-600'}`}>{s.won}</td>
+                          <td className="px-2 py-2.5 text-center">
+                            <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full
+                              ${s.winPct >= 50
+                                ? isDark ? 'bg-emerald-900/50 text-emerald-400' : 'bg-emerald-100 text-emerald-700'
+                                : isDark ? 'bg-orange-900/40 text-orange-400' : 'bg-orange-100 text-orange-600'}`}>
+                              {s.winPct}%
+                            </span>
+                          </td>
+                          <td className={`px-4 py-2.5 text-right text-xs font-bold
+                            ${s.profit > 0 ? 'text-emerald-400' : s.profit < 0 ? 'text-red-400' : isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+                            {s.profit === 0 ? '—' : `${s.profit > 0 ? '+' : ''}₹${s.profit}`}
+                          </td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
               </div>
             </div>
           );
