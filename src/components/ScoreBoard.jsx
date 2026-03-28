@@ -352,12 +352,6 @@ export default function ScoreBoard({
                   {isLeader && !player.isOut && (
                     <div className="absolute top-1 left-1/2 -translate-x-1/2 text-base">👑</div>
                   )}
-                  {isCurrentTurn && !isLeader && (
-                    <div className={`absolute top-1 left-1/2 -translate-x-1/2 text-[9px] font-black px-1.5 py-0.5 rounded-full whitespace-nowrap
-                      ${isDark ? 'bg-blue-500/80 text-white' : 'bg-blue-500 text-white'}`}>
-                      ▶ Turn
-                    </div>
-                  )}
                   {/* Rank */}
                   <div className="flex items-center justify-between mb-1.5">
                     <span className={`text-xs font-bold ${isDark ? 'text-emerald-500' : 'text-emerald-500'}`}>
