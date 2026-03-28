@@ -19,7 +19,7 @@ const RULES = [
 const RANK_EMOJIS = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟'];
 
 const computePlayerStats = (name, pastGames) => {
-  let played = 0, won = 0, invested = 0, totalWon = 0;
+  let played = 0, wonSolo = 0, splitCount = 0, invested = 0, totalWon = 0;
   const recentGames = [];
   for (const game of pastGames) {
     const p = game.players.find(pl => pl.name === name);
@@ -28,17 +28,18 @@ const computePlayerStats = (name, pastGames) => {
     const inv = (p.contributions || 1) * (game.buyInAmount || 0);
     invested += inv;
     const isWinner = game.winner?.name === name;
-    // Count split recipients as winners too
     const hasSplit = game.splitResults != null && game.splitResults[p.id] > 0;
-    if (isWinner || hasSplit) won++;
+    if (hasSplit) splitCount++;
+    else if (isWinner) wonSolo++;
     let winAmt = 0;
     if (game.splitResults?.[p.id] != null) winAmt = game.splitResults[p.id];
     else if (isWinner) winAmt = game.totalPool || 0;
     totalWon += winAmt;
     recentGames.push({ date: game.date, isWinner: isWinner || hasSplit, score: p.totalScore, winAmt, inv, rounds: game.rounds });
   }
+  const won = wonSolo + splitCount;
   return {
-    played, won,
+    played, wonSolo, splitCount, won,
     lost: played - won,
     winPct: played > 0 ? Math.round((won / played) * 100) : 0,
     invested, totalWon,
@@ -978,11 +979,13 @@ export default function GameSetup({ onStart, theme, pastGames = [], clearHistory
                 <table className="w-full text-sm">
                   <thead>
                     <tr className={`text-xs font-bold border-b ${isDark ? 'text-emerald-500 border-casino-green-light/20' : 'text-emerald-600 border-emerald-100'}`}>
-                      <th className="text-left px-3 py-2 w-6">#</th>
+                      <th className="text-left px-3 py-2">#</th>
                       <th className="text-left px-2 py-2">Player</th>
-                      <th className="text-center px-1 py-2">G</th>
-                      <th className="text-center px-1 py-2">L</th>
-                      <th className="text-center px-1 py-2">₹In</th>
+                      <th className="text-center px-1 py-2">Games</th>
+                      <th className="text-center px-1 py-2">Won</th>
+                      <th className="text-center px-1 py-2">Lost</th>
+                      <th className="text-center px-1 py-2">Split</th>
+                      <th className="text-center px-1 py-2">Invested</th>
                       <th className="text-center px-1 py-2">Win%</th>
                       <th className="text-right px-3 py-2">Profit</th>
                     </tr>
@@ -1000,9 +1003,11 @@ export default function GameSetup({ onStart, theme, pastGames = [], clearHistory
                           <td className={`px-3 py-2.5 text-xs font-bold ${isDark ? 'text-emerald-600' : 'text-emerald-400'}`}>
                             {idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `${idx + 1}`}
                           </td>
-                          <td className={`px-2 py-2.5 font-bold truncate max-w-[80px] ${isDark ? 'text-white' : 'text-emerald-900'}`}>{name}</td>
+                          <td className={`px-2 py-2.5 font-bold truncate max-w-[70px] ${isDark ? 'text-white' : 'text-emerald-900'}`}>{name}</td>
                           <td className={`px-1 py-2.5 text-center text-xs ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>{s.played}</td>
+                          <td className={`px-1 py-2.5 text-center text-xs font-bold ${isDark ? 'text-casino-gold' : 'text-amber-600'}`}>{s.wonSolo}</td>
                           <td className={`px-1 py-2.5 text-center text-xs font-bold ${isDark ? 'text-red-400' : 'text-red-500'}`}>{s.lost}</td>
+                          <td className={`px-1 py-2.5 text-center text-xs font-bold ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>{s.splitCount}</td>
                           <td className={`px-1 py-2.5 text-center text-xs ${isDark ? 'text-emerald-500' : 'text-emerald-600'}`}>
                             {s.invested > 0 ? `₹${s.invested}` : '—'}
                           </td>
