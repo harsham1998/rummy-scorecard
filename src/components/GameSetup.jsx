@@ -981,7 +981,7 @@ export default function GameSetup({ onStart, theme, pastGames = [], clearHistory
                   <tbody className={`divide-y ${isDark ? 'divide-casino-green-light/10' : 'divide-emerald-50'}`}>
                     {[...playersWithHistory]
                       .map(name => ({ name, s: computePlayerStats(name, pastGames) }))
-                      .sort((a, b) => b.s.winPct - a.s.winPct || b.s.profit - a.s.profit)
+                      .sort((a, b) => b.s.profit - a.s.profit)
                       .map(({ name, s }, idx) => (
                         <tr
                           key={name}
