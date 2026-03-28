@@ -472,6 +472,7 @@ export default function GameSetup({ onStart, theme, pastGames = [], clearHistory
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState(null);
   const [voidConfirmId, setVoidConfirmId] = useState(null);
+  const [showAllGames, setShowAllGames] = useState(false);
   const addInputRef = useRef(null);
 
   const isDark = theme === 'dark';
@@ -906,34 +907,21 @@ export default function GameSetup({ onStart, theme, pastGames = [], clearHistory
                 <h3 className={`text-sm font-black ${isDark ? 'text-casino-gold' : 'text-emerald-700'}`}>
                   🕐 Recent Games
                 </h3>
-                {!showClearConfirm ? (
+                {pastGames.length > 3 && (
                   <button
-                    onClick={() => setShowClearConfirm(true)}
-                    className={`text-xs font-medium transition-colors ${isDark ? 'text-emerald-500 hover:text-red-400' : 'text-emerald-400 hover:text-red-500'}`}
+                    onClick={() => setShowAllGames(v => !v)}
+                    className={`text-xs font-medium transition-colors ${isDark ? 'text-emerald-400 hover:text-casino-gold' : 'text-emerald-500 hover:text-emerald-700'}`}
                   >
-                    Clear all
+                    {showAllGames ? 'Show less' : 'Show all'}
                   </button>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <span className={`text-xs ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>Sure?</span>
-                    <button
-                      onClick={() => { clearHistory(); setShowClearConfirm(false); }}
-                      className="text-xs font-bold text-red-400 hover:text-red-300"
-                    >
-                      Yes
-                    </button>
-                    <button
-                      onClick={() => setShowClearConfirm(false)}
-                      className={`text-xs font-bold ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}
-                    >
-                      No
-                    </button>
-                  </div>
                 )}
               </div>
 
-              <div className={`divide-y ${isDark ? 'divide-casino-green-light/15' : 'divide-emerald-50'}`}>
-                {pastGames.slice(0, 3).map((game) => (
+              <div
+                className={`divide-y ${isDark ? 'divide-casino-green-light/15' : 'divide-emerald-50'}`}
+                style={showAllGames && pastGames.length > 5 ? { maxHeight: '300px', overflowY: 'auto' } : {}}
+              >
+                {(showAllGames ? pastGames : pastGames.slice(0, 3)).map((game) => (
                   <button
                     key={game.id}
                     onClick={() => setSelectedGame(game)}

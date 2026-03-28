@@ -435,25 +435,23 @@ export default function ScoreBoard({
                         const isTurn = !player.isOut && player.id === currentTurnPlayerId;
                         return (
                         <div key={player.id}
-                          className={`flex-1 min-w-[72px] px-1 py-3 text-xs font-bold text-center truncate relative
+                          className={`flex-1 min-w-[72px] px-1 py-1 text-xs font-bold text-center truncate relative
                             ${isTurn ? 'border-x-2 border-blue-400' : ''}
                             ${player.isOut
                               ? isDark ? 'text-gray-500 line-through' : 'text-gray-400 line-through'
-                              : isTurn
-                                ? isDark ? 'text-blue-300 bg-blue-500/15' : 'text-blue-700 bg-blue-50'
-                                : leader?.id === player.id
-                                  ? isDark ? 'text-casino-gold' : 'text-amber-600'
-                                  : isDark ? 'text-emerald-300' : 'text-emerald-700'
+                              : leader?.id === player.id
+                                ? isDark ? 'text-casino-gold' : 'text-amber-600'
+                                : isDark ? 'text-emerald-300' : 'text-emerald-700'
                             }`}>
+                          {player.name}
+                          {player.isOut && <span className="ml-0.5 no-underline" style={{ textDecoration: 'none' }}>💀</span>}
                           {isTurn && (
-                            <div className="flex justify-center mb-0.5">
-                              <span className={`text-[9px] font-black px-2 py-0.5 rounded-full ${isDark ? 'bg-blue-500 text-white' : 'bg-blue-500 text-white'}`}>
+                            <div className="flex justify-center mt-0.5">
+                              <span className="text-[9px] font-black px-2 py-0.5 rounded-full bg-blue-500 text-white">
                                 Turn
                               </span>
                             </div>
                           )}
-                          {player.name}
-                          {player.isOut && <span className="ml-0.5 no-underline" style={{ textDecoration: 'none' }}>💀</span>}
                         </div>
                         );
                       })}
