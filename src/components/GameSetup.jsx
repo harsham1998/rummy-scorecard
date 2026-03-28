@@ -3,9 +3,9 @@ import { supabase } from '../lib/supabase';
 
 const SUITS = ['♠', '♥', '♦', '♣'];
 const THRESHOLD_PRESETS = [
-  { label: '80', value: 80, desc: 'Standard' },
-  { label: '101', value: 101, desc: 'Extended' },
-  { label: '201', value: 201, desc: 'Long game' },
+  { label: '201', value: 201, desc: 'Default' },
+  { label: '251', value: 251, desc: '' },
+  { label: '151', value: 151, desc: '' },
 ];
 const RULES = [
   { icon: '🏆', title: 'Won (0 pts)', desc: 'Player who declares successfully and wins the round scores 0.' },
@@ -462,7 +462,7 @@ export default function GameSetup({ onStart, theme, pastGames = [], clearHistory
   const [showAddPlayer, setShowAddPlayer] = useState(false);
   const [newPlayerName, setNewPlayerName] = useState('');
   const [addingPlayer, setAddingPlayer] = useState(false);
-  const [outThreshold, setOutThreshold] = useState(80);
+  const [outThreshold, setOutThreshold] = useState(201);
   const [customThreshold, setCustomThreshold] = useState('');
   const [useCustom, setUseCustom] = useState(false);
   const [buyInAmount, setBuyInAmount] = useState('');

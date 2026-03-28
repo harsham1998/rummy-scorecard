@@ -8,7 +8,7 @@ const createInitialState = () => ({
   gameOver: false,
   winner: null,
   theme: 'dark',
-  outThreshold: 80,
+  outThreshold: 201,
   buyInAmount: 0,
   splitResults: null,
   roundHistory: [],
