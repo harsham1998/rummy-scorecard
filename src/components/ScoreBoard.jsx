@@ -437,19 +437,25 @@ export default function ScoreBoard({
                   <div className={`flex border-b ${isDark ? 'border-casino-green-light/30 bg-casino-green/60' : 'border-emerald-100 bg-emerald-50'}`}>
                     <div className={`w-12 flex-shrink-0 px-2 py-3 text-xs font-bold ${isDark ? 'text-casino-gold' : 'text-emerald-600'}`}>Rnd</div>
                     <div className="flex flex-1">
-                      {sortedPlayers.map(player => (
+                      {sortedPlayers.map(player => {
+                        const isTurn = !player.isOut && player.id === currentTurnPlayerId;
+                        return (
                         <div key={player.id}
-                          className={`flex-1 min-w-[72px] px-1 py-3 text-xs font-bold text-center truncate
+                          className={`flex-1 min-w-[72px] px-1 py-3 text-xs font-bold text-center truncate relative
                             ${player.isOut
                               ? isDark ? 'text-gray-500 line-through' : 'text-gray-400 line-through'
-                              : leader?.id === player.id
-                                ? isDark ? 'text-casino-gold' : 'text-amber-600'
-                                : isDark ? 'text-emerald-300' : 'text-emerald-700'
+                              : isTurn
+                                ? isDark ? 'text-blue-300 bg-blue-500/15' : 'text-blue-700 bg-blue-100/80'
+                                : leader?.id === player.id
+                                  ? isDark ? 'text-casino-gold' : 'text-amber-600'
+                                  : isDark ? 'text-emerald-300' : 'text-emerald-700'
                             }`}>
+                          {isTurn && <span className="mr-0.5">▶</span>}
                           {player.name}
                           {player.isOut && <span className="ml-0.5 no-underline" style={{ textDecoration: 'none' }}>💀</span>}
                         </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
 
