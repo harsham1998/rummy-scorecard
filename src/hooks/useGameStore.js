@@ -431,14 +431,24 @@ export const useGameStore = () => {
     const roundTo50 = (v) => Math.round(v / 50) * 50;
     const leader = active.reduce((min, p) => p.totalScore < min.totalScore ? p : min, active[0]);
 
-    // Use remaining points as weight so no active player gets ₹0
-    const weightMap = {};
-    active.forEach(p => { weightMap[p.id] = Math.max(1, threshold - p.totalScore); });
-    const totalWeight = active.reduce((sum, p) => sum + weightMap[p.id], 0);
+    const dropMap = {};
+    active.forEach(p => { dropMap[p.id] = Math.floor(Math.max(0, threshold - p.totalScore) / 20); });
+    const totalDrops = active.reduce((sum, p) => sum + dropMap[p.id], 0);
+    const totalDropBonus = totalDrops * buyIn;
 
-    active.forEach(p => {
-      splits[p.id] = roundTo50((weightMap[p.id] / totalWeight) * pool);
-    });
+    if (totalDrops === 0 || buyIn === 0) {
+      // No drops or no buy-in — equal split
+      active.forEach(p => { splits[p.id] = roundTo50(pool / active.length); });
+    } else if (totalDropBonus < pool) {
+      // Drop bonuses don't exhaust pool — give each drop its buy-in value, split remainder equally
+      const base = roundTo50((pool - totalDropBonus) / active.length);
+      active.forEach(p => { splits[p.id] = base + dropMap[p.id] * buyIn; });
+    } else {
+      // Drop bonuses would exceed pool — proportional to drops (with min 1 so no one gets ₹0)
+      active.forEach(p => { dropMap[p.id] = Math.max(1, dropMap[p.id]); });
+      const total = active.reduce((sum, p) => sum + dropMap[p.id], 0);
+      active.forEach(p => { splits[p.id] = roundTo50((dropMap[p.id] / total) * pool); });
+    }
     // Adjust leader's share so total exactly equals pool
     const diff = pool - active.reduce((sum, p) => sum + splits[p.id], 0);
     if (diff !== 0) splits[leader.id] += diff;

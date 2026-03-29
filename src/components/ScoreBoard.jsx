@@ -67,10 +67,10 @@ function SplitModal({ players, outThreshold, totalPool, buyInAmount, computeSpli
         {/* Split breakdown */}
         <div className="px-5 py-4 space-y-2">
           <p className={`text-xs font-bold mb-3 ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>
-            Split proportional to remaining points
+            Each drop = ₹{buyInAmount} · remainder split equally
           </p>
           {sortedActive.map((p, i) => {
-            const ptsLeft = Math.max(1, outThreshold - p.totalScore);
+            const drops = Math.floor(Math.max(0, outThreshold - p.totalScore) / 20);
             return (
               <div key={p.id} className={`flex items-center gap-3 p-2.5 rounded-xl
                 ${isDark ? 'bg-casino-green/40' : 'bg-emerald-50'}`}>
@@ -81,7 +81,7 @@ function SplitModal({ players, outThreshold, totalPool, buyInAmount, computeSpli
                     <span className={`text-xs ${isDark ? 'text-emerald-500' : 'text-emerald-500'}`}>{p.totalScore} pts</span>
                     <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full
                       ${isDark ? 'bg-blue-900/40 text-blue-300' : 'bg-blue-100 text-blue-700'}`}>
-                      {ptsLeft} pts left
+                      {drops} 🃏 drops
                     </span>
                   </div>
                 </div>
